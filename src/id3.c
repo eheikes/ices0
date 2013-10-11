@@ -254,7 +254,45 @@ id3v2_read_frame (input_stream_t* source, id3v2_tag* tag)
       len2 -= rlen;
     }
 
-    /* skip encoding */
+    /* Convert Unicode strings to ISO-8859-1 using simple reduction. */
+    /* Breakdown of buf by bytes, according to ID3v2 specs:
+        0   - Unicode/ISO-8859-1 flag
+        1-2 - BOM (if Unicode) or string data (if ISO-8859-1)
+        3+  - string data
+     */
+    if (buf[0] == 0x1) /* 1 = Unicode, 0 = ISO-8859-1 */
+    {
+      /* Determine the byte order by looking at the BOM */
+      int byte_order;
+      if (buf[1] == 0xFFFFFFFF && buf[2] == 0xFFFFFFFE)
+      {
+        byte_order = 1;
+      }
+      else
+      {
+        byte_order = 0;
+      }
+
+      /* Modify the buffer in place. */
+      int read_pos  = 3; /* skip BOM */
+      int write_pos = 1; /* overwrite the BOM */
+      while (read_pos < len)
+      {
+        if (buf[read_pos+byte_order] == 0) /* ASCII character */
+        {
+          buf[write_pos] = (byte_order ? buf[read_pos] : buf[read_pos+byte_order]);
+        }
+        else
+        {
+          buf[write_pos] = '?'; /* use a question mark for extended characters */
+        }
+
+        read_pos  += 2; /* 2 bytes for UTF-16 */
+        write_pos += 1; /* 1 byte for ISO-8859-1 */
+      }
+      buf[write_pos] = '\0';
+    }
+
     if (!strcmp (hdr, ID3V2_TITLE_TAG(tag))) {
       buf[len] = '\0';
       ices_log_debug ("ID3v2: Title found: %s", buf + 1);
