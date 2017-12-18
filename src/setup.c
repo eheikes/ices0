@@ -190,6 +190,7 @@ ices_setup_parse_stream_defaults (ices_stream_t* stream)
   stream->conn = NULL;
   stream->host = ices_util_strdup (ICES_DEFAULT_HOST);
   stream->port = ICES_DEFAULT_PORT;
+  stream->user = ices_util_strdup (ICES_DEFAULT_USER);
   stream->password = ices_util_strdup (ICES_DEFAULT_PASSWORD);
   stream->protocol = ICES_DEFAULT_PROTOCOL;
 
@@ -220,6 +221,7 @@ ices_setup_free_stream (ices_stream_t* stream)
   if (stream->conn)
     shout_free (stream->conn);
   ices_util_free (stream->host);
+  ices_util_free (stream->user);
   ices_util_free (stream->password);
 
   ices_util_free (stream->mount);
@@ -424,6 +426,10 @@ ices_setup_parse_command_line (ices_config_t *ices_config, char **argv,
 	  arg++;
 	  stream->port = atoi (argv[arg]);
 	  break;
+        case 'U':
+	  arg++;
+	  ices_util_free (stream->user);
+	  stream->user = ices_util_strdup (argv[arg]);
         case 'R':
 #ifdef HAVE_LIBLAME
 	  stream->reencode = 1;
@@ -499,6 +505,7 @@ ices_setup_activate_libshout_changes (const ices_config_t *ices_config)
 
     shout_set_host (conn, stream->host);
     shout_set_port (conn, stream->port);
+    shout_set_user (conn, stream->user);
     shout_set_password (conn, stream->password);
     shout_set_format (conn, SHOUT_FORMAT_MP3);
     if (stream->protocol == icy_protocol_e)
@@ -527,7 +534,7 @@ ices_setup_activate_libshout_changes (const ices_config_t *ices_config)
                     shout_get_port (conn),
 		    stream->protocol == icy_protocol_e ? "icy" :
 		      stream->protocol == http_protocol_e ? "http" : "xaudiocast");
-    ices_log_debug ("Mount: %s, Password: %s", shout_get_mount (conn), shout_get_password (conn));
+    ices_log_debug ("Mount: %s, User: %s, Password: %s", shout_get_mount (conn), shout_get_user (conn), shout_get_password (conn));
     ices_log_debug ("Name: %s\tURL: %s", shout_get_name (conn), shout_get_url(conn));
     ices_log_debug ("Genre: %s\tDesc: %s", shout_get_genre (conn),
 		    shout_get_description (conn));
@@ -560,6 +567,7 @@ ices_setup_usage (void)
   printf ("\t-m <mountpoint>\n");
   printf ("\t-n <stream name>\n");
   printf ("\t-p <port>\n");
+  printf ("\t-U <user>\n");
   printf ("\t-P <password>\n");
   printf ("\t-R (activate reencoding)\n");
   printf ("\t-r (randomize playlist)\n");
@@ -653,4 +661,3 @@ ices_setup_update_pidfile (int icespid)
   }
 }
 
-		

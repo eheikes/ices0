@@ -104,6 +104,7 @@ ices_plugin_t *crossfade_plugin(int secs);
 #define BUFSIZE 8192
 #define ICES_DEFAULT_HOST "127.0.0.1"
 #define ICES_DEFAULT_PORT 8000
+#define ICES_DEFAULT_USER "source"
 #define ICES_DEFAULT_MOUNT "/ices"
 #define ICES_DEFAULT_PASSWORD "letmein"
 #define ICES_DEFAULT_PROTOCOL http_protocol_e
